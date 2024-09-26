@@ -7,8 +7,10 @@ const SHEET_ROWS = 5000;
 const SHEET_COLS = 10;
 
 const spreadsheetId = process.env.SPREADSHEET_ID;
+const credentials = JSON.parse(Buffer.from(process.env.SERVICE_ACCOUNT_BASE64, 'base64').toString('utf-8'));
+
 const auth = new google.auth.GoogleAuth({
-    keyFilename: process.env.SERVICE_ACCOUNT,
+    credentials,
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
 

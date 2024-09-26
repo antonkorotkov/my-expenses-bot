@@ -1,0 +1,17 @@
+services:
+  app:
+    container_name: TelegramBot
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      SERVICE_ACCOUNT_BASE64:
+      SPREADSHEET_ID:
+      BOT_TOKEN:
+      CHAT_ID:
+    logging:
+      driver: json-file
+      options:
+        max-size: 100k
+        max-file: 1
+    restart: always
