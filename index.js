@@ -96,7 +96,7 @@ bot.use(createConversation(addExpenseConversation));
 
 bot.use(async (ctx, next) => {
     if (ctx.chat.id !== Number(process.env.CHAT_ID))
-        return await ctx.reply('Упс. Не той чат.');
+        return await ctx.reply(`Упс. Не той чат. ${ctx.chat.id}`);
 
     await next();
 });

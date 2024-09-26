@@ -1,6 +1,6 @@
 services:
   app:
-    container_name: TelegramBot
+    container_name: MyExpensesBot
     build:
       context: ./
       dockerfile: Dockerfile
