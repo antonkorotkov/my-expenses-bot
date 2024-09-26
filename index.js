@@ -62,7 +62,7 @@ async function addExpenseConversation(conversation, ctx) {
                 const month = Number(m) - 1;
                 const year = Number(y);
 
-                if (new Date().getFullYear() !== year)
+                if (new Date().getFullYear() === year)
                     date = new Date(year, month, day, 12);
             }
 
