@@ -4,7 +4,7 @@ const { Bot, Keyboard, session } = require("grammy");
 const { conversations, createConversation } = require("@grammyjs/conversations");
 const { addExpense } = require('./api/expenses');
 
-const TODAY = 'Согодні';
+const TODAY = 'Сьогодні';
 const YESTERDAY = 'Вчора';
 const BEFORE_YESTERDAY = 'Позавчора';
 const NO = 'Без коментаря';
@@ -13,7 +13,7 @@ const CATEGORIES = [
     ['🍔 Їжа', '🧥 Одяг', '🧸 Іграшки'],
     ['💄 Краса', '🌡️ Здоровʼя', '⚽️ Спорт'],
     ['🚗 Машина', '🎮 Розваги', '🛩️ Подорожі'],
-    ['🚕 Транспорт', '🎥 Підписки', 'Інше']
+    ['🚕 Транспорт', '🎥 Підписки', '🏡 Дім']
 ];
 
 const categoryKeyboard = new Keyboard().oneTime();
