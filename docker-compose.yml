@@ -15,3 +15,8 @@ services:
         max-size: 100k
         max-file: 1
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.05'
+          memory: 50M
