@@ -18,14 +18,15 @@ const addExpense = async (value, category, date, comment, name) => {
     const dateMonth = String(date.getMonth() + 1).padStart(2, '0');
     const dateYear = date.getFullYear();
     const dateFormatted = `${dateDay}.${dateMonth}.${dateYear}`;
+    const dateMonthString = date.toLocaleString('uk', { month: 'long' });
 
     const todayDay = String(new Date().getDate()).padStart(2, '0');
     const todayMonth = String(new Date().getMonth() + 1).padStart(2, '0');
     const todayYear = new Date().getFullYear();
     const todayFormatted = `${todayDay}.${todayMonth}.${todayYear}`;
 
-    await addDataRows([[dateFormatted, todayFormatted, category, name, value, comment]]);
-    debug('Added expense:', dateFormatted, todayFormatted, category, name, value, comment);
+    await addDataRows([[dateFormatted, todayFormatted, category, name, value, comment, dateMonthString]]);
+    debug('Added expense:', dateFormatted, todayFormatted, category, name, value, comment, dateMonthString);
     await sortColumn(0);
 };
 

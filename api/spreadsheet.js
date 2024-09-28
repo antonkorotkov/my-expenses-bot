@@ -160,7 +160,7 @@ const createSheetIfNotExists = async () => {
         valueInputOption: 'USER_ENTERED',
         resource: {
             values: [
-                ['Operation Date', 'Date Added', 'Category', 'Person', 'Value', 'Comment']
+                ['Operation Date', 'Date Added', 'Category', 'Person', 'Value', 'Comment', 'Month']
             ]
         }
     });
