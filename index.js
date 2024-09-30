@@ -117,6 +117,22 @@ bot.on('msg:text', async ctx => {
         return ctx.reply('Додайте мене у групу');
 });
 
+bot.catch((err) => {
+    const ctx = err.ctx;
+    console.error(`Error while handling update ${ctx.update.update_id}:`);
+
+    const e = err.error;
+    if (e instanceof GrammyError) {
+        console.error("Error in request:", e.description);
+    } else if (e instanceof HttpError) {
+        console.error("Could not contact Telegram:", e);
+    } else {
+        console.error("Unknown error:", e);
+    }
+
+    process.exit(1);
+});
+
 (async () => {
     await bot.api.setMyCommands([
         { command: "expense", description: "Додати витрати" },
