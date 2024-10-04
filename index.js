@@ -129,8 +129,6 @@ bot.catch((err) => {
     } else {
         console.error("Unknown error:", e);
     }
-
-    process.exit(1);
 });
 
 (async () => {
