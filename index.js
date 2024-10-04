@@ -1,6 +1,6 @@
 require('dotenv').config();
 
-const { Bot, Keyboard, session } = require("grammy");
+const { Bot, Keyboard, session, GrammyError, HttpError } = require("grammy");
 const { conversations, createConversation } = require("@grammyjs/conversations");
 const { addExpense } = require('./api/expenses');
 
