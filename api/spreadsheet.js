@@ -43,17 +43,23 @@ const getSheetId = () => {
 /**
  * Get the Sheet Title based on the year
  *
+ * @param {string} [range]
  * @returns {string}
  */
-const getSheetName = () => {
-    return getCurrentYear().toString();
+const getSheetName = (range) => {
+    const year = getCurrentYear();
+
+    if (range)
+        return `${year}!${range}`;
+
+    return year.toString();
 };
 
 /**
  * Create and format a new sheet if it does not exist yet for the current year
  *
  * @throws {Error}
- * @returns {void}
+ * @returns {Promise<void>}
  */
 const createSheetIfNotExists = async () => {
     const sheets = await getSheetsClient();
@@ -192,6 +198,24 @@ const addDataRows = async values => {
 };
 
 /**
+ * @returns {Promise<any[][] | undefined | null>}
+ */
+const getDataRows = async () => {
+    const sheets = await getSheetsClient();
+    const range = getSheetName('A2:G');
+
+    const result = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range,
+        valueRenderOption: 'UNFORMATTED_VALUE'
+    });
+
+    const numRows = result.data.values ? result.data.values.length : 0;
+    debug(`${numRows} rows retrieved.`);
+    return result.data.values;
+}
+
+/**
  * @param {number} columnIndex
  * @param {'SORT_ORDER_UNSPECIFIED' | 'ASCENDING' | 'DESCENDING'} [direction]
  */
@@ -233,5 +257,6 @@ const sortColumn = async (columnIndex, direction = 'ASCENDING') => {
 module.exports = {
     createSheetIfNotExists,
     addDataRows,
+    getDataRows,
     sortColumn
 }

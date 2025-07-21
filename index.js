@@ -2,7 +2,7 @@ require('dotenv').config();
 
 const { Bot, Keyboard, session, GrammyError, HttpError } = require("grammy");
 const { conversations, createConversation } = require("@grammyjs/conversations");
-const { addExpense } = require('./api/expenses');
+const { addExpense, getExpenses } = require('./api/expenses');
 
 const TODAY = 'Сьогодні';
 const YESTERDAY = 'Вчора';
@@ -25,6 +25,15 @@ CATEGORIES.forEach(row => {
     categoryKeyboard.row();
     row.forEach(cat => categoryKeyboard.text(cat));
 });
+
+const formatMoney = money => {
+    return new Intl.NumberFormat('uk-UA', {
+        style: 'currency',
+        currency: 'EUR',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(money);
+};
 
 async function addExpenseConversation(conversation, ctx) {
     try {
@@ -109,8 +118,18 @@ bot.command('expense', async ctx => {
         await ctx.conversation.enter('addExpenseConversation');
 });
 
-bot.command(['stats_w', 'stats_m', 'stats_y'], async ctx => {
+bot.command(['stats_w'], async ctx => {
     await ctx.reply('Це ще не готово...');
+});
+
+bot.command('stats_m', async ctx => {
+    const money = await getExpenses('m');
+    await ctx.reply(money ? `Витрати за місяць: ${formatMoney(money)} 😫` : 'Немає витрат за місяць', { reply_markup: null });
+});
+
+bot.command('stats_y', async ctx => {
+    const money = await getExpenses('y');
+    await ctx.reply(money ? `Витрати за рік: ${formatMoney(money)} 😫` : 'Немає витрат за рік', { reply_markup: null });
 });
 
 bot.on('msg:text', async ctx => {

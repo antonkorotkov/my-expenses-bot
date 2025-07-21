@@ -1,6 +1,6 @@
 'use strict';
 
-const { addDataRows, createSheetIfNotExists, sortColumn } = require('./spreadsheet');
+const { addDataRows, createSheetIfNotExists, sortColumn, getDataRows } = require('./spreadsheet');
 const debug = require('debug')('Expenses API');
 
 /**
@@ -30,6 +30,36 @@ const addExpense = async (value, category, date, comment, name) => {
     await sortColumn(0);
 };
 
+/**
+ * @param {'w' | 'm' | 'y'} filter
+ * @returns {Promise<number>}
+ */
+const getExpenses = async (filter) => {
+    debug('Reading expenses');
+    await createSheetIfNotExists();
+    const rows = await getDataRows();
+
+    if (!rows || rows.length === 0) {
+        debug('No expenses found');
+        return 0;
+    }
+
+    if (filter === 'y')
+        return rows.reduce((sum, row) => sum + (row[4] || 0), 0);
+
+    if (filter === 'm') {
+        const currentMonth = new Date().toLocaleString('uk', { month: 'long' });
+        return rows.reduce((sum, row) => {
+            if (row[6] === currentMonth)
+                return sum + (row[4] || 0);
+            return sum;
+        }, 0);
+    }
+
+    return 0;
+}
+
 module.exports = {
-    addExpense
+    addExpense,
+    getExpenses
 };
