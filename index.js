@@ -27,7 +27,7 @@ CATEGORIES.forEach(row => {
 });
 
 const formatMoney = money => {
-    return new Intl.NumberFormat('uk-UA', {
+    return new Intl.NumberFormat('sk-SK', {
         style: 'currency',
         currency: 'EUR',
         minimumFractionDigits: 2,
@@ -118,8 +118,9 @@ bot.command('expense', async ctx => {
         await ctx.conversation.enter('addExpenseConversation');
 });
 
-bot.command(['stats_w'], async ctx => {
-    await ctx.reply('Це ще не готово...');
+bot.command('stats_w', async ctx => {
+    const money = await getExpenses('w');
+    await ctx.reply(money ? `Витрати за тиждень: ${formatMoney(money)} 😫` : 'Немає витрат за тиждень', { reply_markup: null });
 });
 
 bot.command('stats_m', async ctx => {
