@@ -9,10 +9,12 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "@grammyjs/conversations": "^1.2.0",
+        "@ai-sdk/openai": "^2.0.7",
+        "@grammyjs/conversations": "^2.1.0",
+        "ai": "^5.0.8",
         "debug": "^4.3.7",
         "dotenv": "^16.4.5",
         "googleapis": "^144.0.0",
-        "grammy": "^1.30.0"
+        "grammy": "^1.37.0"
     }
 }
