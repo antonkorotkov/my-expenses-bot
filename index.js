@@ -1,96 +1,14 @@
 require('dotenv').config();
 
-const { Bot, Keyboard, session, GrammyError, HttpError } = require("grammy");
+const { Bot, session, GrammyError, HttpError } = require("grammy");
 const { conversations, createConversation } = require("@grammyjs/conversations");
-const { addExpense, getExpenses } = require('./api/expenses');
+const addExpenseConversation = require('./lib/conversations/add-expense.conversation');
+const addExpenseFromReceiptConversation = require('./lib/conversations/add-expense-from-receipt.conversation');
+const { formatMoney } = require('./lib/utils');
+const extractDataFromReceipt = require('./lib/api/ai');
+const { getExpenses } = require('./lib/api/expenses');
 
-const TODAY = 'Сьогодні';
-const YESTERDAY = 'Вчора';
-const BEFORE_YESTERDAY = 'Позавчора';
-const NO = 'Без коментаря';
-
-const CATEGORIES = [
-    ['🍔 Їжа', '🧥 Одяг', '🧸 Іграшки'],
-    ['💄 Краса', '🌡️ Здоровʼя', '⚽️ Спорт'],
-    ['🚗 Машина', '🎮 Розваги', '🛩️ Подорожі'],
-    ['🚕 Транспорт', '🍽️ Ресторани', '🏡 Дім'],
-    ['🐈‍⬛ Боря', '🏠 Оренда', 'Інше']
-];
-
-const categoryKeyboard = new Keyboard().oneTime();
-const dateKeyboard = new Keyboard().oneTime().text(TODAY).text(YESTERDAY).text(BEFORE_YESTERDAY);
-const commentKeyboard = new Keyboard().oneTime().text(NO);
-
-CATEGORIES.forEach(row => {
-    categoryKeyboard.row();
-    row.forEach(cat => categoryKeyboard.text(cat));
-});
-
-const formatMoney = money => {
-    return new Intl.NumberFormat('sk-SK', {
-        style: 'currency',
-        currency: 'EUR',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    }).format(money);
-};
-
-async function addExpenseConversation(conversation, ctx) {
-    try {
-        await ctx.reply('Скільки витрачено в Євро? Наприклад: 1000, 9.99, 7.5');
-        let value;
-        do {
-            value = await conversation.form.number(ctx => ctx.reply('Спробуй ще раз.'));
-
-            if (value <= 0)
-                await ctx.reply('Таке не можна...');
-        } while (value <= 0);
-
-        await ctx.reply('Якої категорії витрати?', { reply_markup: categoryKeyboard });
-        const { msg: { text: category } } = await conversation.waitFor("message:text");
-
-        await ctx.reply('Коли була витрата?', { reply_markup: dateKeyboard });
-        let date;
-        do {
-            const { msg: { text: dateTxt } } = await conversation.waitFor('message:text');
-
-            const today = new Date();
-            if (dateTxt === TODAY) {
-                date = today;
-            }
-            else if (dateTxt === YESTERDAY) {
-                date = new Date(today);
-                date.setDate(today.getDate() - 1);
-            }
-            else if (dateTxt === BEFORE_YESTERDAY) {
-                date = new Date(today);
-                date.setDate(today.getDate() - 2);
-            }
-            else if (/^\d{2}\.\d{2}\.\d{4}$/.test(dateTxt)) {
-                const [d, m, y] = dateTxt.split('.');
-                const day = Number(d);
-                const month = Number(m) - 1;
-                const year = Number(y);
-
-                if (new Date().getFullYear() === year)
-                    date = new Date(year, month, day, 12);
-            }
-
-            if (!date)
-                await ctx.reply('Щось не зрозумів...', { reply_markup: dateKeyboard });
-        } while (!date);
-
-        await ctx.reply('Додати якийсь коментар?', { reply_markup: commentKeyboard });
-        const { msg: { text: commentAnswer } } = await conversation.waitFor('message:text');
-        const comment = commentAnswer !== NO ? commentAnswer : undefined;
-
-        await addExpense(value, category, date, comment, ctx.update.message.from.first_name);
-        return await ctx.reply('👍', { reply_markup: null });
-    } catch (error) {
-        await ctx.reply(`Йосип драний! Сталася халепа: ${error.message ?? error}`, { reply_markup: null });
-    }
-}
-
+const processedMediaGroups = new Set();
 const bot = new Bot(process.env.BOT_TOKEN);
 
 bot.use(session({
@@ -103,6 +21,7 @@ bot.use(session({
 bot.use(conversations());
 
 bot.use(createConversation(addExpenseConversation));
+bot.use(createConversation(addExpenseFromReceiptConversation));
 
 bot.use(async (ctx, next) => {
     if (ctx.chat.id !== Number(process.env.CHAT_ID))
@@ -136,6 +55,48 @@ bot.command('stats_y', async ctx => {
 bot.on('msg:text', async ctx => {
     if (ctx.update.message.chat.type === 'private')
         return ctx.reply('Додайте мене у групу');
+});
+
+bot.on('message:photo', async ctx => {
+    try {
+        const stats = await ctx.conversation.active();
+
+        if (Object.keys(stats).length)
+            return;
+
+        if (ctx.msg.media_group_id) {
+            if (processedMediaGroups.has(ctx.msg.media_group_id)) {
+                return;
+            }
+
+            processedMediaGroups.add(ctx.msg.media_group_id);
+
+            setTimeout(() => {
+                processedMediaGroups.delete(ctx.msg.media_group_id);
+            }, 60000);
+        }
+
+        await ctx.reply('Зараз перевіримо шо ви там накупили, хвилиночку...', { reply_markup: null });
+
+        const file = await ctx.getFile();
+        const data = await extractDataFromReceipt(file.file_path);
+        const [valueString, category, dateString] = data.split(',');
+        const value = parseFloat(valueString.trim());
+        const date = dateString.trim();
+
+        if (isNaN(value) || value <= 0) {
+            await ctx.reply('Не можу зрозуміти скільки витрачено.', { reply_markup: null });
+            return await ctx.conversation.enter('addExpenseConversation');
+        }
+
+        await ctx.conversation.enter('addExpenseFromReceiptConversation', {
+            value: value,
+            category: category.trim(),
+            date: date.length !== 10 ? undefined : date,
+        });
+    } catch (error) {
+        return await ctx.reply(`Йосип драний! Сталася халепа: ${error.message ?? error}`, { reply_markup: null });
+    }
 });
 
 bot.catch((err) => {

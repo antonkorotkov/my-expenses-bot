@@ -9,6 +9,7 @@ services:
       SPREADSHEET_ID:
       BOT_TOKEN:
       CHAT_ID:
+      OPENAI_API_KEY:
     logging:
       driver: json-file
       options:
